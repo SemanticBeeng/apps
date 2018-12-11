@@ -5,7 +5,6 @@ import aecor.data.Folded.syntax._
 import aecor.data._
 import aecor.example.account.AccountEvent._
 import aecor.example.account.EventsourcedAlgebra.AccountState
-import aecor.example.account.Rejection._
 import aecor.example.common.Amount
 import cats.Monad
 import cats.implicits._
@@ -19,7 +18,7 @@ final class EventsourcedAlgebra[F[_]](
   override def open(checkBalance: Boolean): F[Unit] =
     read.flatMap {
       case None =>
-        append(AccountOpened(checkBalance))
+        append(AccountEvent.AccountOpened(checkBalance))
       case Some(_) =>
         ().pure[F]
     }
@@ -27,13 +26,16 @@ final class EventsourcedAlgebra[F[_]](
   override def credit(transactionId: AccountTransactionId, amount: Amount): F[Unit] =
     read.flatMap {
       case Some(account) =>
+        /**
+          * #todo how to call if this was a side-effect, like of querying a repository ?
+          */
         if (account.hasProcessedTransaction(transactionId)) {
           ().pure[F]
         } else {
-          append(AccountCredited(transactionId, amount))
+          append(AccountEvent.AccountCredited(transactionId, amount))
         }
       case None =>
-        reject(AccountDoesNotExist)
+        reject(Rejection.AccountDoesNotExist)
     }
 
   override def debit(transactionId: AccountTransactionId, amount: Amount): F[Unit] =
@@ -43,13 +45,13 @@ final class EventsourcedAlgebra[F[_]](
           ().pure[F]
         } else {
           if (account.hasFunds(amount)) {
-            append(AccountDebited(transactionId, amount))
+            append(AccountEvent.AccountDebited(transactionId, amount))
           } else {
-            reject(InsufficientFunds)
+            reject(Rejection.InsufficientFunds)
           }
         }
       case None =>
-        reject(AccountDoesNotExist)
+        reject(Rejection.AccountDoesNotExist)
     }
 }
 
@@ -86,6 +88,9 @@ object EventsourcedAlgebra {
       case AccountDebited(transactionId, amount) =>
         copy(
           balance = balance - amount,
+          /**
+            * #todo is there a way to implement this to not keep all in memory ?
+            */
           processedTransactions = processedTransactions + transactionId
         ).next
 
