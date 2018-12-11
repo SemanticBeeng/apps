@@ -17,9 +17,11 @@ object AccountTransactionId extends AnyValCirceEncoding {
 }
 
 sealed abstract class AccountTransactionKind extends Product with Serializable
+
 object AccountTransactionKind {
   case object Normal extends AccountTransactionKind
   case object Revert extends AccountTransactionKind
+
   implicit val decoder: Decoder[AccountTransactionKind] = Decoder[String].emap {
     case "Normal" => Right(Normal)
     case "Revert" => Right(Revert)
@@ -27,6 +29,7 @@ object AccountTransactionKind {
   }
   implicit val encoder: Encoder[AccountTransactionKind] = Encoder[String].contramap(_.toString)
 }
+
 @boopickleWireProtocol
 @autoFunctorK(false)
 trait Algebra[F[_]] {

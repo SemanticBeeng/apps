@@ -6,14 +6,7 @@ import aecor.data._
 import aecor.example.account.AccountId
 import aecor.example.common.Amount
 import aecor.example.transaction.Algebra.TransactionInfo
-import aecor.example.transaction.EventsourcedAlgebra.TransactionState
-import aecor.example.transaction.EventsourcedAlgebra.TransactionStatus.{
-  Authorized,
-  Failed,
-  Requested,
-  Succeeded
-}
-import aecor.example.transaction.Rejection.TransactionRejected
+import aecor.example.transaction.EventsourcedAlgebra.{TransactionState, TransactionStatus}
 import aecor.example.transaction.TransactionEvent._
 import cats.Monad
 import cats.implicits._
@@ -35,52 +28,52 @@ class EventsourcedAlgebra[F[_]](
   override def authorize: F[Unit] =
     read.flatMap {
       case Some(transaction) =>
-        if (transaction.status == Requested) {
-          append(TransactionAuthorized)
-        } else if (transaction.status == Authorized) {
+        if (transaction.status == TransactionStatus.Requested) {
+          append(TransactionEvent.TransactionAuthorized)
+        } else if (transaction.status == TransactionStatus.Authorized) {
           ().pure[F]
         } else {
-          reject(TransactionRejected("Illegal transition"))
+          reject(Rejection.IllegalTransition)
         }
       case None =>
-        reject(TransactionRejected("Transaction not found"))
+        reject(Rejection.TransactionNotFound)
     }
 
   override def fail(reason: String): F[Unit] =
     read.flatMap {
       case Some(transaction) =>
-        if (transaction.status == Failed) {
+        if (transaction.status == TransactionStatus.Failed) {
           ().pure[F]
         } else {
-          append(TransactionFailed(reason))
+          append(TransactionEvent.TransactionFailed(reason))
         }
       case None =>
-        reject(TransactionRejected("Transaction not found"))
+        reject(Rejection.TransactionNotFound)
     }
 
   override def succeed: F[Unit] =
     read.flatMap {
       case Some(transaction) =>
-        if (transaction.status == Succeeded) {
+        if (transaction.status == TransactionStatus.Succeeded) {
           ().pure[F]
-        } else if (transaction.status == Authorized) {
-          append(TransactionSucceeded)
+        } else if (transaction.status == TransactionStatus.Authorized) {
+          append(TransactionEvent.TransactionSucceeded)
         } else {
-          reject(TransactionRejected("Illegal transition"))
+          reject(Rejection.IllegalTransition)
         }
       case None =>
-        reject(TransactionRejected("Transaction not found"))
+        reject(Rejection.TransactionNotFound)
     }
 
   override def getInfo: F[TransactionInfo] =
     read.flatMap {
       case Some(TransactionState(status, from, to, amount)) =>
         TransactionInfo(from, to, amount, Some(status).collect {
-          case Succeeded => true
-          case Failed    => false
+          case TransactionStatus.Succeeded => true
+          case TransactionStatus.Failed    => false
         }).pure[F]
       case None =>
-        reject(TransactionRejected("Transaction not found"))
+        reject(Rejection.TransactionNotFound)
     }
 }
 
