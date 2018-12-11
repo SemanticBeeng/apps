@@ -2,13 +2,11 @@ package aecor.example.transaction
 import java.util.UUID
 
 import aecor.example.common.Timestamp
-import aecor.example.transaction.transaction.Transactions
 import aecor.runtime.Eventsourced
 import aecor.runtime.akkapersistence.AkkaPersistenceRuntime
 import aecor.util.Clock
-import cats.implicits._
 import cats.effect.Effect
-import scodec.codecs.implicits._
+import cats.implicits._
 
 object deployment {
   def deploy[F[_]: Effect](runtime: AkkaPersistenceRuntime[UUID],

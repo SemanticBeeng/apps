@@ -2,7 +2,6 @@ package aecor.example.transaction
 import aecor.example.account.AccountId
 import aecor.example.common.Amount
 import aecor.example.transaction.TransactionRoute.ApiResult
-import aecor.example.transaction.transaction.Transactions
 import cats.effect.{ Concurrent, Timer }
 import cats.implicits._
 

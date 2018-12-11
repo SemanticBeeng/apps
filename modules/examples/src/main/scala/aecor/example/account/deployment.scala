@@ -9,7 +9,8 @@ import cats.effect.Effect
 import cats.implicits._
 
 object deployment {
-  def deploy[F[_]: Effect](runtime: AkkaPersistenceRuntime[UUID], clock: Clock[F]): F[Accounts[F]] =
+  def deploy[F[_]: Effect](runtime: AkkaPersistenceRuntime[UUID],
+                           clock: Clock[F]): F[Accounts[F]] =
     runtime
       .deploy(
         "Account",

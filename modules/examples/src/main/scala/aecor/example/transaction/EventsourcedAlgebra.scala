@@ -13,12 +13,13 @@ import aecor.example.transaction.EventsourcedAlgebra.TransactionStatus.{
   Requested,
   Succeeded
 }
+import aecor.example.transaction.Rejection.TransactionRejected
 import aecor.example.transaction.TransactionEvent._
 import cats.Monad
 import cats.implicits._
 
 class EventsourcedAlgebra[F[_]](
-  implicit F: MonadActionReject[F, Option[TransactionState], TransactionEvent, String]
+  implicit F: MonadActionReject[F, Option[TransactionState], TransactionEvent, Rejection]
 ) extends Algebra[F] {
   import F._
   override def create(fromAccountId: From[AccountId],
@@ -39,10 +40,10 @@ class EventsourcedAlgebra[F[_]](
         } else if (transaction.status == Authorized) {
           ().pure[F]
         } else {
-          reject("Illegal transition")
+          reject(TransactionRejected("Illegal transition"))
         }
       case None =>
-        reject("Transaction not found")
+        reject(TransactionRejected("Transaction not found"))
     }
 
   override def fail(reason: String): F[Unit] =
@@ -54,7 +55,7 @@ class EventsourcedAlgebra[F[_]](
           append(TransactionFailed(reason))
         }
       case None =>
-        reject("Transaction not found")
+        reject(TransactionRejected("Transaction not found"))
     }
 
   override def succeed: F[Unit] =
@@ -65,10 +66,10 @@ class EventsourcedAlgebra[F[_]](
         } else if (transaction.status == Authorized) {
           append(TransactionSucceeded)
         } else {
-          reject("Illegal transition")
+          reject(TransactionRejected("Illegal transition"))
         }
       case None =>
-        reject("Transaction not found")
+        reject(TransactionRejected("Transaction not found"))
     }
 
   override def getInfo: F[TransactionInfo] =
@@ -79,18 +80,18 @@ class EventsourcedAlgebra[F[_]](
           case Failed    => false
         }).pure[F]
       case None =>
-        reject("Transaction not found")
+        reject(TransactionRejected("Transaction not found"))
     }
 }
 
 object EventsourcedAlgebra {
-  def apply[F[_]: MonadActionReject[?[_], Option[TransactionState], TransactionEvent, String]]
+  def apply[F[_]: MonadActionReject[?[_], Option[TransactionState], TransactionEvent, Rejection]]
     : Algebra[F] =
     new EventsourcedAlgebra
 
-  def behavior[F[_]: Monad]: EventsourcedBehavior[EitherK[Algebra, String, ?[_]], F, Option[TransactionState], TransactionEvent] =
+  def behavior[F[_]: Monad]: EventsourcedBehavior[EitherK[Algebra, Rejection, ?[_]], F, Option[TransactionState], TransactionEvent] =
     EventsourcedBehavior
-      .optionalRejectable[Algebra, F, TransactionState, TransactionEvent, String](
+      .optionalRejectable[Algebra, F, TransactionState, TransactionEvent, Rejection](
         apply,
         TransactionState.fromEvent,
         _.applyEvent(_)

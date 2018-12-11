@@ -5,8 +5,7 @@ import aecor.distributedprocessing.DistributedProcessing
 import aecor.example.account.{ AccountRoute, Accounts }
 import aecor.example.common.Timestamp
 import aecor.example.process.{ FS2QueueProcess, TransactionProcessor }
-import aecor.example.transaction.transaction.Transactions
-import aecor.example.transaction.{ TransactionEvent, TransactionId, TransactionRoute }
+import aecor.example.transaction.{ TransactionEvent, TransactionId, TransactionRoute, Transactions }
 import aecor.runtime.akkapersistence.readside.CassandraOffsetStore
 import aecor.runtime.akkapersistence.{ AkkaPersistenceRuntime, CassandraJournalAdapter }
 import aecor.util.JavaTimeClock

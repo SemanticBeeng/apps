@@ -1,4 +1,4 @@
-package aecor.example.account
+package aecor.example.transaction
 
 import aecor.macros.boopickle.BoopickleCodec._
 import scodec.Codec
@@ -6,9 +6,8 @@ import scodec.Codec
 sealed abstract class Rejection extends Product with Serializable
 
 object Rejection extends RejectionInstances {
-  case object AccountDoesNotExist extends Rejection
-  case object InsufficientFunds extends Rejection
-  case object HoldNotFound extends Rejection
+  case class TransactionRejected(reason: String) extends Rejection
+  case object TransactionNotFound extends Rejection
 }
 
 trait RejectionInstances { self: Rejection.type =>
@@ -16,9 +15,7 @@ trait RejectionInstances { self: Rejection.type =>
   import boopickle.CompositePickler
 
   implicit val rejectionPickler: CompositePickler[Rejection] = compositePickler[Rejection]
-    .addConcreteType[AccountDoesNotExist.type]
-    .addConcreteType[InsufficientFunds.type]
-    .addConcreteType[HoldNotFound.type]
+    .addConcreteType[TransactionNotFound.type]
 
   implicit val rejectionCodec: Codec[Rejection] =
     codec[Rejection]

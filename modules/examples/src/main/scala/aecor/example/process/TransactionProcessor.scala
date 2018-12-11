@@ -4,8 +4,7 @@ import aecor.Has
 import aecor.Has.syntax._
 import aecor.example.account.{ AccountTransactionId, AccountTransactionKind, Accounts }
 import aecor.example.transaction.Algebra.TransactionInfo
-import aecor.example.transaction.transaction.Transactions
-import aecor.example.transaction.{ From, TransactionEvent, TransactionId }
+import aecor.example.transaction.{ From, TransactionEvent, TransactionId, Transactions }
 import cats.MonadError
 import cats.implicits._
 
@@ -38,7 +37,7 @@ final class TransactionProcessor[F[_]](transactions: Transactions[F], accounts: 
           txn <- transactions(transactionId).getInfo
             .flatMap {
                   case Right(x) => x.pure[F]
-                  case Left(r)  => F.raiseError[TransactionInfo](TransactionProcessor.Failure(r))
+                  case Left(r)  => F.raiseError[TransactionInfo](TransactionProcessor.Failure(r.toString)) // #todo
                 }
 
           creditResult <- accounts(txn.toAccountId.value).credit(
